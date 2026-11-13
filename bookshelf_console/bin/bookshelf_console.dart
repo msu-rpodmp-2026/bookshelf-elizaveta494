@@ -1,359 +1,423 @@
 import 'dart:io';
-import 'dart:convert'; // Добавлено для использования utf8
+import 'dart:convert';
 
-// Функция для чтения строки с клавиатуры в кодировке UTF-8 (решает проблему с русским языком)
+// Функция для чтения строки с клавиатуры в кодировке UTF-8
 String? readLine() => stdin.readLineSync(encoding: utf8);
 
-void main() {
-  // Задание 1: Приветствие и сведения о среде
-  print('1 ЗАДАНИЕ');
-  print('=== Bookshelf Console ===');
-  print('Версия Dart: ${Platform.version}');
-  print('Операционная система: ${Platform.operatingSystem}');
-  print('');
+// Задание 1: Тип для книги и каталог
+typedef Book = Map<String, Object?>;
 
-  // Задание 2: Ввод данных о книге
-  print('2 Задание');
+final List<Book> library = [
+  {
+    'title': 'Преступление и наказание',
+    'author': 'Фёдор Достоевский',
+    'year': 1866,
+    'pages': 672,
+    'genre': 'роман',
+    'read': true,
+  },
+  {
+    'title': 'Война и мир',
+    'author': 'Лев Толстой',
+    'year': 1869,
+    'pages': 1225,
+    'genre': 'роман',
+    'read': true,
+  },
+  {
+    'title': 'Мастер и Маргарита',
+    'author': 'Михаил Булгаков',
+    'year': 1967,
+    'pages': 480,
+    'genre': 'роман',
+    'read': false,
+  },
+  {
+    'title': '1984',
+    'author': 'Джордж Оруэлл',
+    'year': 1949,
+    'pages': 320,
+    'genre': 'антиутопия',
+    'read': true,
+  },
+  {
+    'title': 'Гарри Поттер и философский камень',
+    'author': 'Джоан Роулинг',
+    'year': 1997,
+    'pages': 432,
+    'genre': 'фэнтези',
+    'read': true,
+  },
+  {
+    'title': 'Дюна',
+    'author': 'Фрэнк Герберт',
+    'year': 1965,
+    'pages': 688,
+    'genre': 'фантастика',
+    'read': false,
+  },
+  {
+    'title': 'Марсианин',
+    'author': 'Энди Вейер',
+    'year': 2011,
+    'pages': 384,
+    'genre': 'фантастика',
+    'read': true,
+  },
+  {
+    'title': 'Основы Dart',
+    'author': 'С. А. Чернышев',
+    'year': 2024,
+    'pages': 521,
+    'genre': 'учебник',
+    'read': false,
+  },
+];
 
-  // 1.Название (не пустое)
-  String title = ''; // Объявляем переменную типа String, изначально пустую
-  while (title.isEmpty) {
-    // Цикл повторяется, пока пользователь не введёт непустое название
-    stdout.write('Название: ');
-    // readLine() - считывает строку с кодировкой utf8
-    // ?.trim() - безопасно удаляет пробелы по краям (если строка не null)
-    // ?? '' - если результат null, используем пустую строку
-    title = readLine()?.trim() ?? '';
+// Задание 3: Функции вывода и поиска
 
-    // Если после удаления пробелов строка пустая - выводим ошибку
-    if (title.isEmpty) {
-      print('Ошибка: название не может быть пустым или состоять из пробелов.');
-    }
+// Вывод каталога с нумерацией и отметкой о прочтении
+void printAll(List<Book> books, {String emptyMessage = 'Ничего не найдено.'}) {
+  if (books.isEmpty) {
+    print(emptyMessage);
+    return;
   }
-
-  // 2. Автор
-  stdout.write('Автор: ');
-  final String author = readLine()?.trim() ?? 'неизвестен';
-
-  // 3. Год издания с проверкой
-  int? year; //  Создаем переменную. Пока она пустая
-  while (year == null) {
-    // Цикл будет повторяться до тех пор, пока year остаётся равным null
-    stdout.write('Год издания: ');
-
-    final String? input = readLine(); // readLine() считывает строку с клавиатуры до нажатия Enter.
-    // Возвращает String? — может вернуть null, если ввод был прерван
-    year = int.tryParse(input?.trim() ?? ''); // input?.trim() — безопасно вызываем trim() для удаления пробелов по краям.
-    //   Оператор "?." означает: если input == null, то не вызывать trim(), а вернуть null.
-    // ?? '' — если результат слева равен null, подставляем пустую строку ''.
-    // int.tryParse(...) — пытается превратить строку в число:если строка содержит только цифры (например, "2024") — вернёт int 2024;
-    if (year == null) {
-      print('Ошибка: введите целое число (только цифры)!');
-    }
+  for (int i = 0; i < books.length; i++) {
+    final book = books[i];
+    final readMark = book['read'] == true ? '[✓]' : '[ ]';
+    final title = book['title'];
+    final author = book['author'];
+    final year = book['year'];
+    final pages = book['pages'];
+    final genre = book['genre'];
+    print('${i + 1}. $readMark $title — $author ($year, $pages стр., $genre)');
   }
+}
 
-  // 4. Количество страниц с проверкой
-  int? pages; //  Создаем переменную. Пока она пустая
-  while (pages == null || pages <= 0) {
-    //  Цикл работает, пока выполняется хотя бы одно из двух условий:
-    // pages равно null (пользователь ввел буквы или ничего не ввел)
-    // pages меньше или равно 0 (пользователь ввел 0 или отрицательное число)
-    stdout.write('Количество страниц: ');
-    final String? input = readLine();
-    pages = int.tryParse(
-      input?.trim() ?? '',
-    ); //Пытаемся превратить строку в число.
-    if (pages == null) {
-      print('Ошибка: введите целое число (только цифры)!');
-    } else if (pages <= 0) {
-      print('Ошибка: количество страниц должно быть больше нуля!');
-      pages = null; // сбрасываем, чтобы цикл продолжился
-    }
-  } // <-- ВАЖНО: Здесь закрывается цикл while для страниц
+// Поиск по подстроке в указанном поле, без учёта регистра
+List<Book> searchByField(List<Book> books, String field, String query) {
+  return books.where((book) {
+    final value = book[field]?.toString().toLowerCase() ?? '';
+    return value.contains(query.toLowerCase());
+  }).toList();
+}
 
-  // Оценка (вещественное число от 0 до 5)
-  double? rating;
-  while (rating == null || rating < 0.0 || rating > 5.0) {
-    // Цикл работает, пока рейтинг не задан (null) или выходит за пределы 0..5
-    stdout.write('Оценка (от 0 до 5): ');
-    final String? input = readLine(); // Считываем то, что ввел пользователь
+// Фильтрация по признаку прочтения
+List<Book> filterByRead(List<Book> books, bool isRead) {
+  return books.where((book) => book['read'] == isRead).toList();
+}
 
-    // Очищаем ввод: заменяем запятую на точку и убираем пробелы по краям
-    // Если input == null, берем пустую строку ''
-    final String cleanInput = (input ?? '').replaceAll(',', '.').trim(); //Защищает программу от пустого ввода (?? ''), заменяет запятые на точки (чтобы Dart корректно распознал дробные числа вроде 4,5) и удаляет лишние пробелы по краям
-    // Пытаемся преобразовать. Если не вышло, rating останется null
-    rating = double.tryParse(cleanInput);
-    if (rating == null) {
-      // Проверяем результат
-      print('  [Ошибка] Введите число (например, 4.5 или 4,5).');
-    } else if (rating < 0.0 || rating > 5.0) {
-      print('  [Ошибка] Оценка должна быть в диапазоне от 0 до 5!');
-      rating = null; // Сбрасываем в null, чтобы цикл заставил ввести заново
-    }
-  } // <-- ВАЖНО: Здесь закрывается цикл while для оценки
-
-  // Признак «прочитана» (да/нет)
-  String readInput = ''; // Объявляем переменную для хранения текста, который введет пользователь.Изначально null
-  bool? isRead; // Объявляем переменную для итогового логического значения (true или false)
-  while (isRead == null) {
-    // Запускаем цикл. Он будет крутиться до тех пор, пока isRead остается равным null
-    stdout.write('Прочитана (да/нет(0/1)): ');
-    readInput =
-        readLine()?.trim().toLowerCase() ??
-        ''; // Считываем то, что ввел пользователь
-    if (readInput == 'да' || readInput == '1') {
-      isRead = true;
-    } else if (readInput == 'нет' || readInput == '0') {
-      isRead = false;
+// Сортировка; направление задаётся именованным параметром
+// Функция не изменяет исходный список
+List<Book> sortBy(List<Book> books, String field, {bool descending = false}) {
+  final copy = [...books];
+  copy.sort((a, b) {
+    final aVal = a[field];
+    final bVal = b[field];
+    int comparison;
+    if (aVal is Comparable && bVal is Comparable) {
+      comparison = aVal.compareTo(bVal);
     } else {
-      print('Ошибка: введите "да" или "нет"!');
+      comparison = aVal.toString().compareTo(bVal.toString());
     }
-  } // <-- ВАЖНО: Здесь закрывается цикл while для признака прочитана
+    return descending ? -comparison : comparison;
+  });
+  return copy;
+}
 
-  //  Задание 3: Вычисляемые характеристики
-  final int safePages = pages;
-  final int safeYear = year;
-  final double safeRating = rating;
+// Задание 4: Статистика с методами Iterable
+void printStatistics(List<Book> books) {
+  if (books.isEmpty) {
+    print('Каталог пуст.');
+    return;
+  }
 
-  //  Категория
-  final String category =
-      safePages <
-          150 // Используем вложенный тернарный оператор (сокращённая форма if-else)
-      // Если страниц меньше 150 — 'брошюра',
-      //иначе если меньше 400 — 'книга',иначе (400 и больше) — 'том'
-      ? 'брошюра'
-      : (safePages < 400 ? 'книга' : 'том');
+  final total = books.length;
+  final readCount = books.where((b) => b['read'] == true).length;
+  final totalPages = books.fold<int>(
+    0,
+    (sum, book) => sum + (book['pages'] as int),
+  );
+  final avgPages = totalPages / total;
 
-  //  Время чтения
-  final double readingTimeHours =
-      safePages / 50.0; // Делим количество страниц на 50.0
-  final String formattedTime = readingTimeHours.toStringAsFixed(
-    1,
-  ); //отделяем число до одного знака после запятой
+  final oldest = books.reduce(
+    (a, b) => (a['year'] as int) < (b['year'] as int) ? a : b,
+  );
+  final newest = books.reduce(
+    (a, b) => (a['year'] as int) > (b['year'] as int) ? a : b,
+  );
+  final largest = books.reduce(
+    (a, b) => (a['pages'] as int) > (b['pages'] as int) ? a : b,
+  );
 
-  //  Возраст книги
-  final int currentYear = DateTime.now().year; // DateTime.now() создаёт объект с текущей датой и временем.  .year извлекает из него только год
-  final int age =
-      currentYear -
-      safeYear; // Вычисляем возраст книги: текущий год минус год издания
+  final genres = books.map((b) => b['genre'] as String).toSet();
+  final genreCount = <String, int>{};
+  for (final book in books) {
+    final genre = book['genre'] as String;
+    genreCount[genre] = (genreCount[genre] ?? 0) + 1;
+  }
 
-  //  Инициалы
-  final String initials =
-      author //  цепочка из 4 методов, которые преобразуют полное имя в инициалы
-          .split(
-            ' ',
-          ) // 1. .split(' ') — разбивает строку по пробелам в список слов
-          .where((word) => word.isNotEmpty) // 2. .where((word) => word.isNotEmpty) — оставляет только непустые слова
-          .map(
-            (word) => '${word[0].toUpperCase()}.',
-          ) // 3.преобразует каждое слово
-          // word[0] — берёт первый символ слова
-          // .toUpperCase() — делает его заглавным
-          // '${...}.' — оборачивает букву в строку и добавляет точку
-          .join(' '); // 4. склеивает список обратно в одну строку через пробел
+  final readPercent = (readCount / total * 100).toStringAsFixed(1);
 
-  //Вывод
   print('');
-  print('=' * 44);
-  print(' Название: «$title»');
-  print(' Автор: $author ($initials)');
-  print(' Год: $safeYear (возраст: $age лет)');
-  print(' Страниц: $safePages (категория: $category)');
-  print(' Время чтения: ~$formattedTime ч.');
-  print(' Оценка: $safeRating');
-  print(' Прочитана: ${isRead ? "Да" : "Нет"}');
-  print('=' * 44);
-
-  // Задание 4: Коллекции
-  print('\n 4 Задание: Работа с коллекциями ');
-
-  // 1. List<String> shelf (Список)
-  print('\n1. Работа со списком (List):');
-  List<String> shelf = [
-    'Война и мир',
-    'Преступление и наказание',
-    'Мастер и Маргарита',
-    '1984',
-    'Гарри Поттер',
-  ];
-  print('   Исходный список: $shelf');
+  print('=== Статистика каталога ===');
+  print('Всего книг: $total, прочитано: $readCount ($readPercent%)');
   print(
-    '   Длина списка: ${shelf.length}',
-  ); //.length: Возвращает количество элементов (5)
-  print('   Первый элемент: ${shelf.first}');
-  print(
-    '   Последний элемент: ${shelf.last}',
-  ); //.first и .last:  читаемые способы получить первый и последний элемент
-
-  shelf.insert(0, 'Новая книга в начале'); // .insert(0, ...): Вставляет элемент по указанному индексу (0), сдвигая все остальные элементы вправо
-  shelf.add('Новая книга в конце'); // Добавление в конец
-  print('   После добавления: $shelf');
-
-  shelf.remove('1984'); //.remove: Ищет в списке элемент, равный '1984', и удаляет его. Если такого элемента нет, ничего не произойдет
-  print('   После удаления "1984": $shelf');
-
-  // 2. Set<String> genres (Множество)
-  print('\n2. Работа с множеством (Set):');
-  print(
-    '   Введите жанры через запятую (например: фантастика, детектив, фантастика):',
+    'Суммарно страниц: $totalPages, в среднем: ${avgPages.toStringAsFixed(1)}',
   );
-  String? genresInput = readLine(); //Считываем строку от пользователя. Тип String?, так как ввод может быть прерван
+  print('Самая старая: ${oldest['title']} (${oldest['year']})');
+  print('Самая новая: ${newest['title']} (${newest['year']})');
+  print('Самая объёмная: ${largest['title']} (${largest['pages']} стр.)');
+  print('Жанры: ${genres.join(', ')}');
+  print('Книг по жанрам:');
+  genreCount.forEach((genre, count) {
+    print('  $genre: $count');
+  });
+}
 
-  // Разбиваем строку по запятой, убираем пробелы и приводим к нижнему регистру
-  List<String> rawGenres = (genresInput ?? '').split(','); //genresInput ?? '': Защита от null. Если пользователь ничего не ввёл, берём пустую строку
-  //.split(','): Разбивает строку на части по запятой
-  Set<String> genres = {}; // Пустое множество строк
+// Задание 5: Надёжный ввод числа
+int askInt(String prompt, {int min = 0, int? max}) {
+  int? value;
+  do {
+    stdout.write('$prompt: ');
+    value = int.tryParse(readLine() ?? '');
+    if (value == null || value < min || (max != null && value > max)) {
+      print('Некорректное значение.');
+      if (max == null) {
+        print('Ожидается целое число не меньше $min.');
+      } else {
+        print('Ожидается целое число от $min до $max.');
+      }
+      value = null;
+    }
+  } while (value == null);
+  return value;
+}
 
-  for (String genre in rawGenres) {
-    genres.add(genre.trim().toLowerCase());
-  } //Мы проходим по каждому элементу списка rawGenres.
-  //.trim(): Удаляет случайные пробелы в начале и конце
-  //.toLowerCase(): Приводит к нижнему регистру (чтобы 'Фантастика' и 'фантастика' считались одним и тем же жанром).
-  //.add(...): Добавляет в множество. Если такой жанр уже есть, множество игнорирует добавление.Множество автоматически отбрасывает дубликаты, что мы и демонстрируем
-  print('   Жанры без дубликатов: $genres');
+// Добавление книги
+void addBook() {
+  print('');
+  print('=== Добавление книги ===');
+  stdout.write('Название: ');
+  final title = readLine()?.trim() ?? '';
+  stdout.write('Автор: ');
+  final author = readLine()?.trim() ?? '';
+  final year = askInt('Год издания', min: 1000, max: 2026);
+  final pages = askInt('Количество страниц', min: 1);
+  stdout.write('Жанр: ');
+  final genre = readLine()?.trim() ?? '';
+  stdout.write('Прочитана (да/нет): ');
+  final readInput = readLine()?.trim().toLowerCase() ?? '';
+  final isRead =
+      readInput == 'да' ||
+      readInput == 'д' ||
+      readInput == 'yes' ||
+      readInput == 'y';
 
-  // 3. Map<String, int> pagesByBook (Словарь)
-  print('\n3. Работа со словарём (Map):');
-  Map<String, int> pagesByBook = {
-    //мы создаём строгий словарь, в котором действуют жесткие правила:Ключ (то, что до двоеточия) может быть ТОЛЬКО текстом (String).Значение (то, что после двоеточия) может быть ТОЛЬКО целым числом (int)
-    'Война и мир': 1225,
-    'Преступление и наказание': 672,
-    'Мастер и Маргарита': 480,
-    '1984': 320,
-    'Гарри Поттер': 432,
-  };
+  library.add({
+    'title': title,
+    'author': author,
+    'year': year,
+    'pages': pages,
+    'genre': genre,
+    'read': isRead,
+  });
+  print('Книга добавлена.');
+}
 
-  print('   Все пары ключ-значение:');
-  for (MapEntry<String, int> entry in pagesByBook.entries) {
-    print(
-      '   - ${entry.key}: ${entry.value} стр.',
-    ); //.entries: Возвращает специальную коллекцию пар MapEntry
-    //entry.key: Доступ к названию книги. entry.value: Доступ к количеству страниц
+// Удаление книги по номеру
+void removeBook() {
+  print('');
+  print('=== Удаление книги ===');
+  printAll(library);
+  if (library.isEmpty) return;
+
+  final number = askInt(
+    'Введите номер книги для удаления',
+    min: 1,
+    max: library.length,
+  );
+  final book = library[number - 1];
+  stdout.write('Удалить "${book['title']}"? (да/нет): ');
+  final confirm = readLine()?.trim().toLowerCase() ?? '';
+  if (confirm == 'да' || confirm == 'д' || confirm == 'yes' || confirm == 'y') {
+    library.removeAt(number - 1);
+    print('Книга удалена.');
+  } else {
+    print('Удаление отменено.');
   }
+}
 
-  // Находим книгу с макс. страницами, считаем сумму
-  String maxBook = '';
-  int maxPages = 0;
-  int totalPages = 0;
+// Задание 6: Функции высшего порядка
 
-  for (MapEntry<String, int> entry in pagesByBook.entries) {
-    totalPages += entry.value;
-    if (entry.value > maxPages) {
-      maxPages = entry.value;
-      maxBook = entry.key;
+typedef BookPredicate = bool Function(Book book);
+
+List<Book> filter(List<Book> books, BookPredicate test) {
+  return books.where(test).toList();
+}
+
+// Замыкание-счётчик
+Function makeCounter() {
+  int count = 0;
+  return () {
+    count++;
+    return count;
+  };
+}
+
+// Демонстрация функций высшего порядка
+void demonstrateHigherOrderFunctions() {
+  print('');
+  print('=== Демонстрация функций высшего порядка ===');
+
+  // 1. Толстые книги (более 500 страниц)
+  final thickBooks = filter(library, (book) => (book['pages'] as int) > 500);
+  print('');
+  print('Толстые книги (более 500 страниц):');
+  printAll(thickBooks, emptyMessage: 'Не найдено.');
+
+  // 2. Книги нового века (после 2000 года)
+  final modernBooks = filter(library, (book) => (book['year'] as int) > 2000);
+  print('');
+  print('Книги нового века (после 2000 года):');
+  printAll(modernBooks, emptyMessage: 'Не найдено.');
+
+  // 3. Непрочитанные книги выбранного жанра
+  stdout.write('');
+  stdout.write('Введите жанр для поиска непрочитанных книг: ');
+  final genre = readLine()?.trim().toLowerCase() ?? '';
+  final unreadByGenre = filter(
+    library,
+    (book) =>
+        (book['genre'] as String).toLowerCase() == genre &&
+        book['read'] == false,
+  );
+  print('');
+  print('Непрочитанные книги жанра "$genre":');
+  printAll(unreadByGenre, emptyMessage: 'Не найдено.');
+}
+
+// Главное меню
+void printMenu() {
+  print('');
+  print('=== BookShelf ===');
+  print('1. Показать весь каталог');
+  print('2. Поиск по автору');
+  print('3. Поиск по названию');
+  print('4. Фильтр по жанру');
+  print('5. Фильтр по признаку "прочитана"');
+  print('6. Сортировка');
+  print('7. Статистика каталога');
+  print('8. Добавить книгу');
+  print('9. Удалить книгу');
+  print('10. Демонстрация функций высшего порядка');
+  print('0. Выход');
+}
+
+void main() {
+  final commandCounter = makeCounter();
+  var running = true;
+
+  while (running) {
+    printMenu();
+    stdout.write('> ');
+    final command = readLine()?.trim();
+
+    switch (command) {
+      case '1':
+        printAll(library);
+        commandCounter();
+        break;
+      case '2':
+        stdout.write('Введите имя автора: ');
+        final query = readLine()?.trim() ?? '';
+        final results = searchByField(library, 'author', query);
+        print('');
+        print('Результаты поиска:');
+        printAll(results, emptyMessage: 'Книги не найдены.');
+        commandCounter();
+        break;
+      case '3':
+        stdout.write('Введите название: ');
+        final query = readLine()?.trim() ?? '';
+        final results = searchByField(library, 'title', query);
+        print('');
+        print('Результаты поиска:');
+        printAll(results, emptyMessage: 'Книги не найдены.');
+        commandCounter();
+        break;
+      case '4':
+        stdout.write('Введите жанр: ');
+        final genre = readLine()?.trim().toLowerCase() ?? '';
+        final results = library
+            .where((b) => (b['genre'] as String).toLowerCase() == genre)
+            .toList();
+        print('');
+        print('Книги жанра "$genre":');
+        printAll(results, emptyMessage: 'Книги не найдены.');
+        commandCounter();
+        break;
+      case '5':
+        stdout.write('Показать прочитанные (да) или непрочитанные (нет)? ');
+        final input = readLine()?.trim().toLowerCase() ?? '';
+        final isRead = input == 'да' || input == 'д';
+        final results = filterByRead(library, isRead);
+        print('');
+        if (isRead) {
+          print('Прочитанные книги:');
+        } else {
+          print('Непрочитанные книги:');
+        }
+        printAll(results, emptyMessage: 'Книги не найдены.');
+        commandCounter();
+        break;
+      case '6':
+        print('Сортировка по:');
+        print('1 - название');
+        print('2 - автор');
+        print('3 - год');
+        print('4 - объём');
+        stdout.write('Выберите поле: ');
+        final fieldChoice = readLine()?.trim();
+        final fieldMap = {
+          '1': 'title',
+          '2': 'author',
+          '3': 'year',
+          '4': 'pages',
+        };
+        final field = fieldMap[fieldChoice] ?? 'title';
+        stdout.write('По убыванию? (да/нет): ');
+        final descInput = readLine()?.trim().toLowerCase() ?? '';
+        final descending = descInput == 'да' || descInput == 'д';
+        final sorted = sortBy(library, field, descending: descending);
+        print('');
+        print('Отсортированный каталог:');
+        printAll(sorted);
+        commandCounter();
+        break;
+      case '7':
+        printStatistics(library);
+        commandCounter();
+        break;
+      case '8':
+        addBook();
+        commandCounter();
+        break;
+      case '9':
+        removeBook();
+        commandCounter();
+        break;
+      case '10':
+        demonstrateHigherOrderFunctions();
+        commandCounter();
+        break;
+      case '0':
+        running = false;
+        final count = commandCounter();
+        print('Работа завершена. Выполнено команд: $count');
+        break;
+      default:
+        print('Неизвестная команда. Повторите ввод.');
     }
   }
-
-  double averagePages = totalPages / pagesByBook.length; //Делим общую сумму на количество книг (.length). Метод .toStringAsFixed(1) округляет результат до 1 знака после запятой
-  print('   Книга с макс. страницами: $maxBook ($maxPages стр.)');
-  print('   Суммарное кол-во страниц: $totalPages');
-  print('   Среднее кол-во страниц: ${averagePages.toStringAsFixed(1)}');
-
-  // 4. Список all с операторами раскрытия (...), if и for
-  print('\n4. Продвинутый список (all):');
-  bool includeClassic = true; //  Создаём "переключатель". Пока он равен true, условие ниже сработает.
-  List<String> extraBooks = ['Дюна', 'Марсианин']; //Создаём отдельный маленький список книг.Не просто добавляем его как один большой элемент, а выписываем из него книги по одной
-  List<String> all = [
-    //Создаём главный список
-    'Основная книга',
-    if (includeClassic) 'Классическая литература', //Еcли includeClassic равен true, то добавь в список 'Классическая литература'.Если он false, Dart просто проигнорирует эту строку
-    ...extraBooks, // Оператор раскрытия (spread)
-    for (int i = 1; i <= 3; i++) 'Том $i', // Цикл крутится 3 раза (i принимает значения 1, 2, 3).На каждом круге конвейер создаёт новую строку 'Том 1', 'Том 2', 'Том 3' и сразу кладёт её в наш главный список
-  ];
-  print('   Результат: $all');
-
-  // Задание 5: Операторы
-  print('\n5 Задание: Демонстрация операторов ');
-
-  // 1. Различие /, ~/ и %
-  print('\n1. Арифметические операторы:');
-  print('   7 / 2  = ${7 / 2}   (обычное деление, результат всегда double)');
-  print(
-    '   7 ~/ 2 = ${7 ~/ 2}  (целочисленное деление, отбрасывает дробную часть, результат int)',
-  );
-  print('   7 % 2  = ${7 % 2}   (остаток от деления)');
-
-  // 2. «Ленивое» вычисление && и ||
-  print('\n2. «Ленивое» вычисление (short-circuit) && и ||:');
-  // Создадим функции, которые выводят текст при вызове, чтобы доказать, выполняются они или нет
-  bool funcTrue() {
-    print('   -> Функция funcTrue() выполнена');
-    return true;
-  }
-
-  bool funcFalse() {
-    print('   -> Функция funcFalse() выполнена');
-    return false;
-  }
-
-  bool getTrue() {
-    // ← сначала объявление
-    print('   -> Функция getTrue() выполнена');
-    return true;
-  }
-
-  bool getFalse() {
-    print('   -> Функция getFalse() выполнена');
-    return false;
-  }
-
-  print('   Проверка: getTrue() || funcFalse()');
-  bool resOr = getTrue() || funcFalse(); // ← потом использование
-  print('   Результат: $resOr\n');
-
-  print('   Проверка: getFalse() && funcTrue()');
-  bool resAnd = getFalse() && funcTrue();
-  print('   Результат: $resAnd');
-  // 3. Действие операторов ?., ??, ??=
-  String? getNullText() {
-    String? t;
-    return t;
-  }
-
-  print('\n3. Операторы Null Safety (?. , ?? , ??=):');
-  String? text = getNullText();
-
-  // ?. : безопасный вызов. Если text == null, метод не вызывается, возвращается null (ошибки нет)
-  int? length = text?.length;
-  print('   text?.length = $length (безопасно вернул null)');
-
-  // ?? : если значение слева null, подставляется значение справа
-  String safeText = text ?? 'Значение по умолчанию';
-  print('   text ?? "Значение по умолчанию" = $safeText');
-
-  // ??= : присваивает значение справа переменной слева, ТОЛЬКО если она сейчас равна null
-  String? name;
-  name ??= 'Аноним';
-  print('   name ??= "Аноним" -> теперь name равно: $name');
-
-  // 4. Различие final и const на примере списка
-  print('\n4. Различие final и const на примере списка:');
-
-  final List<String> finalList = ['A', 'B'];
-  const List<String> constList = ['A', 'B'];
-  print('   constList: $constList');
-  // final запрещает переназначать саму переменную (finalList = [...] нельзя),
-  // но позволяет изменять содержимое изменяемого объекта (списка)
-  finalList.add('C');
-  print('   finalList после добавления "C": $finalList');
-
-  // const делает объект полностью неизменяемым (immutable) на этапе компиляции.
-  // Раскомментируйте строку ниже, чтобы увидеть ошибку: Unsupported operation: Cannot add to an unmodifiable list
-  // constList.add('C');
-  print(
-    '   constList изменить нельзя (методы add/remove заблокированы компилятором).',
-  );
-
-  // 5. Каскадный оператор .. с объектом StringBuffer
-  print('\n5. Каскадный оператор (..) с StringBuffer:');
-  StringBuffer buffer = StringBuffer();
-  // Оператор .. позволяет вызывать несколько методов одного и того же объекта
-  // последовательно, не повторяя имя переменной buffer каждый раз
-  buffer
-    ..write('Привет')
-    ..write(', ')
-    ..write('мир')
-    ..write('!');
-
-  print('   Результат работы StringBuffer: ${buffer.toString()}');
 }

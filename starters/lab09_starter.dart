@@ -107,9 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: <Widget>[
           SizedBox(height: 180, child: StatsDonut(books: _books)),
           const Divider(height: 1),
-          Expanded(
-            child: BookList(books: _books, onRemove: _remove),
-          ),
+          Expanded(child: BookList(books: _books, onRemove: _remove)),
         ],
       ),
     );

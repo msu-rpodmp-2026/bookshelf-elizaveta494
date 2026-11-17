@@ -6,6 +6,8 @@ String? readLine() => stdin.readLineSync(encoding: utf8);
 
 // Задание 1: Тип для книги и каталог
 typedef Book = Map<String, Object?>;
+// Глобальная переменная для управления циклом меню
+var running = true;
 
 final List<Book> library = [
   {
@@ -180,7 +182,13 @@ int askInt(String prompt, {int min = 0, int? max}) {
   int? value;
   do {
     stdout.write('$prompt: ');
-    value = int.tryParse(readLine() ?? '');
+    final input = readLine();
+    if (input == null) {
+      print('\nВвод закрыт. Завершение работы.');
+      running = false;
+      return 0;
+    }
+    value = int.tryParse(input);
     if (value == null || value < min || (max != null && value > max)) {
       print('Некорректное значение.');
       if (max == null) {
@@ -316,12 +324,17 @@ void printMenu() {
 
 void main() {
   final commandCounter = makeCounter();
-  var running = true;
+  running = true;
 
   while (running) {
     printMenu();
     stdout.write('> ');
     final command = readLine()?.trim();
+    if (command == null) {
+      print('\nВвод закрыт. Завершение работы.');
+      running = false;
+      continue;
+    }
 
     switch (command) {
       case '1':

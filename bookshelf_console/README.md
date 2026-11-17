@@ -7,3 +7,4 @@
 ```bash
 cd bookshelf_console
 dart run bin/bookshelf_console.dart
+```

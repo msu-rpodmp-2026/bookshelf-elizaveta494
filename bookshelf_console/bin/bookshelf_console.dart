@@ -1,13 +1,18 @@
 import 'dart:io';
 import 'dart:convert';
 
-// Функция для чтения строки с клавиатуры в кодировке UTF-8
-String? readLine() => stdin.readLineSync(encoding: utf8);
+// Исключение: поток ввода закрыт (EOF) — операцию надо немедленно отменить.
+class InputClosedException implements Exception {}
+
+// Безопасное чтение строки: null (EOF) превращается в исключение.
+String readLineOrThrow() {
+  final input = stdin.readLineSync(encoding: utf8);
+  if (input == null) throw InputClosedException();
+  return input;
+}
 
 // Задание 1: Тип для книги и каталог
 typedef Book = Map<String, Object?>;
-// Глобальная переменная для управления циклом меню
-var running = true;
 
 final List<Book> library = [
   {
@@ -78,7 +83,6 @@ final List<Book> library = [
 
 // Задание 3: Функции вывода и поиска
 
-// Вывод каталога с нумерацией и отметкой о прочтении
 void printAll(List<Book> books, {String emptyMessage = 'Ничего не найдено.'}) {
   if (books.isEmpty) {
     print(emptyMessage);
@@ -96,7 +100,6 @@ void printAll(List<Book> books, {String emptyMessage = 'Ничего не най
   }
 }
 
-// Поиск по подстроке в указанном поле, без учёта регистра
 List<Book> searchByField(List<Book> books, String field, String query) {
   return books.where((book) {
     final value = book[field]?.toString().toLowerCase() ?? '';
@@ -104,13 +107,10 @@ List<Book> searchByField(List<Book> books, String field, String query) {
   }).toList();
 }
 
-// Фильтрация по признаку прочтения
 List<Book> filterByRead(List<Book> books, bool isRead) {
   return books.where((book) => book['read'] == isRead).toList();
 }
 
-// Сортировка; направление задаётся именованным параметром
-// Функция не изменяет исходный список
 List<Book> sortBy(List<Book> books, String field, {bool descending = false}) {
   final copy = [...books];
   copy.sort((a, b) {
@@ -177,17 +177,12 @@ void printStatistics(List<Book> books) {
   });
 }
 
-// Задание 5: Надёжный ввод числа
+// Задание 5: Надёжный ввод числа (теперь бросает исключение при EOF)
 int askInt(String prompt, {int min = 0, int? max}) {
   int? value;
   do {
     stdout.write('$prompt: ');
-    final input = readLine();
-    if (input == null) {
-      print('\nВвод закрыт. Завершение работы.');
-      running = false;
-      return 0;
-    }
+    final input = readLineOrThrow(); // EOF -> исключение, операция прервётся
     value = int.tryParse(input);
     if (value == null || value < min || (max != null && value > max)) {
       print('Некорректное значение.');
@@ -202,20 +197,20 @@ int askInt(String prompt, {int min = 0, int? max}) {
   return value;
 }
 
-// Добавление книги
+// Добавление книги (все readLine заменены на readLineOrThrow)
 void addBook() {
   print('');
   print('=== Добавление книги ===');
   stdout.write('Название: ');
-  final title = readLine()?.trim() ?? '';
+  final title = readLineOrThrow().trim();
   stdout.write('Автор: ');
-  final author = readLine()?.trim() ?? '';
+  final author = readLineOrThrow().trim();
   final year = askInt('Год издания', min: 1000, max: 2026);
   final pages = askInt('Количество страниц', min: 1);
   stdout.write('Жанр: ');
-  final genre = readLine()?.trim() ?? '';
+  final genre = readLineOrThrow().trim();
   stdout.write('Прочитана (да/нет): ');
-  final readInput = readLine()?.trim().toLowerCase() ?? '';
+  final readInput = readLineOrThrow().trim().toLowerCase();
   final isRead =
       readInput == 'да' ||
       readInput == 'д' ||
@@ -233,7 +228,7 @@ void addBook() {
   print('Книга добавлена.');
 }
 
-// Удаление книги по номеру
+// Удаление книги по номеру (защищено от RangeError при EOF)
 void removeBook() {
   print('');
   print('=== Удаление книги ===');
@@ -247,7 +242,7 @@ void removeBook() {
   );
   final book = library[number - 1];
   stdout.write('Удалить "${book['title']}"? (да/нет): ');
-  final confirm = readLine()?.trim().toLowerCase() ?? '';
+  final confirm = readLineOrThrow().trim().toLowerCase();
   if (confirm == 'да' || confirm == 'д' || confirm == 'yes' || confirm == 'y') {
     library.removeAt(number - 1);
     print('Книга удалена.');
@@ -257,14 +252,12 @@ void removeBook() {
 }
 
 // Задание 6: Функции высшего порядка
-
 typedef BookPredicate = bool Function(Book book);
 
 List<Book> filter(List<Book> books, BookPredicate test) {
   return books.where(test).toList();
 }
 
-// Замыкание-счётчик
 Function makeCounter() {
   int count = 0;
   return () {
@@ -273,27 +266,22 @@ Function makeCounter() {
   };
 }
 
-// Демонстрация функций высшего порядка
 void demonstrateHigherOrderFunctions() {
   print('');
   print('=== Демонстрация функций высшего порядка ===');
 
-  // 1. Толстые книги (более 500 страниц)
   final thickBooks = filter(library, (book) => (book['pages'] as int) > 500);
   print('');
   print('Толстые книги (более 500 страниц):');
   printAll(thickBooks, emptyMessage: 'Не найдено.');
 
-  // 2. Книги нового века (после 2000 года)
   final modernBooks = filter(library, (book) => (book['year'] as int) > 2000);
   print('');
   print('Книги нового века (после 2000 года):');
   printAll(modernBooks, emptyMessage: 'Не найдено.');
 
-  // 3. Непрочитанные книги выбранного жанра
-  stdout.write('');
   stdout.write('Введите жанр для поиска непрочитанных книг: ');
-  final genre = readLine()?.trim().toLowerCase() ?? '';
+  final genre = readLineOrThrow().trim().toLowerCase();
   final unreadByGenre = filter(
     library,
     (book) =>
@@ -324,113 +312,114 @@ void printMenu() {
 
 void main() {
   final commandCounter = makeCounter();
-  running = true;
+  var running = true;
 
   while (running) {
-    printMenu();
-    stdout.write('> ');
-    final command = readLine()?.trim();
-    if (command == null) {
-      print('\nВвод закрыт. Завершение работы.');
-      running = false;
-      continue;
-    }
+    try {
+      printMenu();
+      stdout.write('> ');
+      final command = readLineOrThrow().trim();
 
-    switch (command) {
-      case '1':
-        printAll(library);
-        commandCounter();
-        break;
-      case '2':
-        stdout.write('Введите имя автора: ');
-        final query = readLine()?.trim() ?? '';
-        final results = searchByField(library, 'author', query);
-        print('');
-        print('Результаты поиска:');
-        printAll(results, emptyMessage: 'Книги не найдены.');
-        commandCounter();
-        break;
-      case '3':
-        stdout.write('Введите название: ');
-        final query = readLine()?.trim() ?? '';
-        final results = searchByField(library, 'title', query);
-        print('');
-        print('Результаты поиска:');
-        printAll(results, emptyMessage: 'Книги не найдены.');
-        commandCounter();
-        break;
-      case '4':
-        stdout.write('Введите жанр: ');
-        final genre = readLine()?.trim().toLowerCase() ?? '';
-        final results = library
-            .where((b) => (b['genre'] as String).toLowerCase() == genre)
-            .toList();
-        print('');
-        print('Книги жанра "$genre":');
-        printAll(results, emptyMessage: 'Книги не найдены.');
-        commandCounter();
-        break;
-      case '5':
-        stdout.write('Показать прочитанные (да) или непрочитанные (нет)? ');
-        final input = readLine()?.trim().toLowerCase() ?? '';
-        final isRead = input == 'да' || input == 'д';
-        final results = filterByRead(library, isRead);
-        print('');
-        if (isRead) {
-          print('Прочитанные книги:');
-        } else {
-          print('Непрочитанные книги:');
-        }
-        printAll(results, emptyMessage: 'Книги не найдены.');
-        commandCounter();
-        break;
-      case '6':
-        print('Сортировка по:');
-        print('1 - название');
-        print('2 - автор');
-        print('3 - год');
-        print('4 - объём');
-        stdout.write('Выберите поле: ');
-        final fieldChoice = readLine()?.trim();
-        final fieldMap = {
-          '1': 'title',
-          '2': 'author',
-          '3': 'year',
-          '4': 'pages',
-        };
-        final field = fieldMap[fieldChoice] ?? 'title';
-        stdout.write('По убыванию? (да/нет): ');
-        final descInput = readLine()?.trim().toLowerCase() ?? '';
-        final descending = descInput == 'да' || descInput == 'д';
-        final sorted = sortBy(library, field, descending: descending);
-        print('');
-        print('Отсортированный каталог:');
-        printAll(sorted);
-        commandCounter();
-        break;
-      case '7':
-        printStatistics(library);
-        commandCounter();
-        break;
-      case '8':
-        addBook();
-        commandCounter();
-        break;
-      case '9':
-        removeBook();
-        commandCounter();
-        break;
-      case '10':
-        demonstrateHigherOrderFunctions();
-        commandCounter();
-        break;
-      case '0':
-        running = false;
-        final count = commandCounter();
-        print('Работа завершена. Выполнено команд: $count');
-        break;
-      default:
-        print('Неизвестная команда. Повторите ввод.');
+      switch (command) {
+        case '1':
+          printAll(library);
+          commandCounter();
+          break;
+        case '2':
+          stdout.write('Введите имя автора: ');
+          final query = readLineOrThrow().trim();
+          final results = searchByField(library, 'author', query);
+          print('');
+          print('Результаты поиска:');
+          printAll(results, emptyMessage: 'Книги не найдены.');
+          commandCounter();
+          break;
+        case '3':
+          stdout.write('Введите название: ');
+          final queryTitle = readLineOrThrow().trim();
+          final resultsTitle = searchByField(library, 'title', queryTitle);
+          print('');
+          print('Результаты поиска:');
+          printAll(resultsTitle, emptyMessage: 'Книги не найдены.');
+          commandCounter();
+          break;
+        case '4':
+          stdout.write('Введите жанр: ');
+          final genre = readLineOrThrow().trim().toLowerCase();
+          final resultsGenre = library
+              .where((b) => (b['genre'] as String).toLowerCase() == genre)
+              .toList();
+          print('');
+          print('Книги жанра "$genre":');
+          printAll(resultsGenre, emptyMessage: 'Книги не найдены.');
+          commandCounter();
+          break;
+        case '5':
+          stdout.write('Показать прочитанные (да) или непрочитанные (нет)? ');
+          final input = readLineOrThrow().trim().toLowerCase();
+          final isRead = input == 'да' || input == 'д';
+          final resultsRead = filterByRead(library, isRead);
+          print('');
+          if (isRead) {
+            print('Прочитанные книги:');
+          } else {
+            print('Непрочитанные книги:');
+          }
+          printAll(resultsRead, emptyMessage: 'Книги не найдены.');
+          commandCounter();
+          break;
+        case '6':
+          print('Сортировка по:');
+          print('1 - название');
+          print('2 - автор');
+          print('3 - год');
+          print('4 - объём');
+          stdout.write('Выберите поле: ');
+          final fieldChoice = readLineOrThrow().trim();
+          final fieldMap = {
+            '1': 'title',
+            '2': 'author',
+            '3': 'year',
+            '4': 'pages',
+          };
+          final field = fieldMap[fieldChoice] ?? 'title';
+          stdout.write('По убыванию? (да/нет): ');
+          final descInput = readLineOrThrow().trim().toLowerCase();
+          final descending = descInput == 'да' || descInput == 'д';
+          final sorted = sortBy(library, field, descending: descending);
+          print('');
+          print('Отсортированный каталог:');
+          printAll(sorted);
+          commandCounter();
+          break;
+        case '7':
+          printStatistics(library);
+          commandCounter();
+          break;
+        case '8':
+          addBook();
+          commandCounter();
+          break;
+        case '9':
+          removeBook();
+          commandCounter();
+          break;
+        case '10':
+          demonstrateHigherOrderFunctions();
+          commandCounter();
+          break;
+        case '0':
+          running = false;
+          final count = commandCounter();
+          print('Работа завершена. Выполнено команд: $count');
+          break;
+        default:
+          print('Неизвестная команда. Повторите ввод.');
+      }
+    } on InputClosedException {
+      // Ловим исключение: прерываем текущую операцию и завершаем цикл
+      print('\nВвод закрыт. Текущая операция отменена. Завершение работы.');
+      running = false;
     }
   }
 }

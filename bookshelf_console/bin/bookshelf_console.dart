@@ -9,88 +9,111 @@ import 'package:bookshelf_console/models/audiobook.dart';
 import 'package:bookshelf_console/models/library.dart';
 import 'package:bookshelf_console/models/library_event.dart';
 
-String? readLine() => stdin.readLineSync(encoding: utf8);
+// Исключение: поток ввода закрыт (EOF) — операцию надо отменить.
+class InputClosedException implements Exception {}
+
+// Безопасное чтение строки: null (EOF) превращается в исключение.
+String readLineOrThrow() {
+  final input = stdin.readLineSync(encoding: utf8);
+  if (input == null) throw InputClosedException();
+  return input;
+}
 
 // Каталог книг (8 книг, 5 жанров)
 final Library<Book> library = Library<Book>();
 
 void initLibrary() {
-  library.add(Book(
-    title: 'Преступление и наказание',
-    author: 'Фёдор Достоевский',
-    year: 1866,
-    pages: 672,
-    genres: {'роман', 'классика'},
-    status: ReadingStatus.finished,
-    rating: 5.0,
-  ));
-  library.add(Book(
-    title: 'Война и мир',
-    author: 'Лев Толстой',
-    year: 1869,
-    pages: 1225,
-    genres: {'роман', 'классика'},
-    status: ReadingStatus.finished,
-    rating: 4.5,
-  ));
-  library.add(Book(
-    title: 'Мастер и Маргарита',
-    author: 'Михаил Булгаков',
-    year: 1967,
-    pages: 480,
-    genres: {'роман', 'фантастика'},
-    status: ReadingStatus.reading,
-  ));
-  library.add(Book(
-    title: '1984',
-    author: 'Джордж Оруэлл',
-    year: 1949,
-    pages: 320,
-    genres: {'антиутопия'},
-    status: ReadingStatus.finished,
-  ));
-  library.add(Book(
-    title: 'Гарри Поттер и философский камень',
-    author: 'Джоан Роулинг',
-    year: 1997,
-    pages: 432,
-    genres: {'фэнтези'},
-    status: ReadingStatus.finished,
-  ));
-  library.add(PaperBook(
-    title: 'Дюна',
-    author: 'Фрэнк Герберт',
-    year: 1965,
-    pages: 688,
-    genres: {'фантастика'},
-    status: ReadingStatus.planned,
-    shelf: 'B3',
-  ));
-  library.add(EBook(
-    title: 'Марсианин',
-    author: 'Энди Вейер',
-    year: 2011,
-    pages: 384,
-    genres: {'фантастика'},
-    status: ReadingStatus.finished,
-    format: 'epub',
-    sizeMb: 2.5,
-  ));
-  library.add(AudioBook(
-    title: 'Основы Dart',
-    author: 'С. А. Чернышев',
-    year: 2024,
-    pages: 521,
-    genres: {'учебник'},
-    status: ReadingStatus.planned,
-    duration: const Duration(hours: 10, minutes: 30),
-    narrator: 'Иван Петров',
-  ));
+  library.add(
+    Book(
+      title: 'Преступление и наказание',
+      author: 'Фёдор Достоевский',
+      year: 1866,
+      pages: 672,
+      genres: {'роман', 'классика'},
+      status: ReadingStatus.finished,
+      rating: 5.0,
+    ),
+  );
+  library.add(
+    Book(
+      title: 'Война и мир',
+      author: 'Лев Толстой',
+      year: 1869,
+      pages: 1225,
+      genres: {'роман', 'классика'},
+      status: ReadingStatus.finished,
+      rating: 4.5,
+    ),
+  );
+  library.add(
+    Book(
+      title: 'Мастер и Маргарита',
+      author: 'Михаил Булгаков',
+      year: 1967,
+      pages: 480,
+      genres: {'роман', 'фантастика'},
+      status: ReadingStatus.reading,
+    ),
+  );
+  library.add(
+    Book(
+      title: '1984',
+      author: 'Джордж Оруэлл',
+      year: 1949,
+      pages: 320,
+      genres: {'антиутопия'},
+      status: ReadingStatus.finished,
+    ),
+  );
+  library.add(
+    Book(
+      title: 'Гарри Поттер и философский камень',
+      author: 'Джоан Роулинг',
+      year: 1997,
+      pages: 432,
+      genres: {'фэнтези'},
+      status: ReadingStatus.finished,
+    ),
+  );
+  library.add(
+    PaperBook(
+      title: 'Дюна',
+      author: 'Фрэнк Герберт',
+      year: 1965,
+      pages: 688,
+      genres: {'фантастика'},
+      status: ReadingStatus.planned,
+      shelf: 'B3',
+    ),
+  );
+  library.add(
+    EBook(
+      title: 'Марсианин',
+      author: 'Энди Вейер',
+      year: 2011,
+      pages: 384,
+      genres: {'фантастика'},
+      status: ReadingStatus.finished,
+      format: 'epub',
+      sizeMb: 2.5,
+    ),
+  );
+  library.add(
+    AudioBook(
+      title: 'Основы Dart',
+      author: 'С. А. Чернышев',
+      year: 2024,
+      pages: 521,
+      genres: {'учебник'},
+      status: ReadingStatus.planned,
+      duration: const Duration(hours: 10, minutes: 30),
+      narrator: 'Иван Петров',
+    ),
+  );
 }
 
 // Вывод каталога
-void printAll(Library<Book> lib,
-    {String emptyMessage = 'Ничего не найдено.'}) {
+void printAll(Library<Book> lib, {String emptyMessage = 'Ничего не найдено.'}) {
   final books = lib.items;
   if (books.isEmpty) {
     print(emptyMessage);
@@ -101,18 +124,19 @@ void printAll(Library<Book> lib,
     final mark = book.status == ReadingStatus.finished
         ? '[✓]'
         : book.status == ReadingStatus.reading
-            ? '[~]'
-            : '[ ]';
+        ? '[~]'
+        : '[ ]';
     print('${i + 1}. $mark ${book.describe()}');
   }
 }
 
-// Надёжный ввод числа
+// Надёжный ввод числа (теперь бросает исключение при EOF)
 int askInt(String prompt, {int min = 0, int? max}) {
   int? value;
   do {
     stdout.write('$prompt: ');
-    value = int.tryParse(readLine() ?? '');
+    final input = readLineOrThrow(); // EOF -> исключение, операция прервётся
+    value = int.tryParse(input);
     if (value == null || value < min || (max != null && value > max)) {
       print('Некорректное значение.');
       if (max == null) {
@@ -135,10 +159,10 @@ void printStatistics(Library<Book> lib) {
   }
 
   final total = books.length;
-  final readCount =
-      books.where((b) => b.status == ReadingStatus.finished).length;
-  final totalPages =
-      books.fold<int>(0, (sum, book) => sum + book.pages);
+  final readCount = books
+      .where((b) => b.status == ReadingStatus.finished)
+      .length;
+  final totalPages = books.fold<int>(0, (sum, book) => sum + book.pages);
   final avgPages = totalPages / total;
 
   final oldest = books.reduce((a, b) => a.year < b.year ? a : b);
@@ -153,8 +177,9 @@ void printStatistics(Library<Book> lib) {
   print('');
   print('=== Статистика каталога ===');
   print('Всего книг: $total, прочитано: $readCount ($readPercent%)');
-  print('Суммарно страниц: $totalPages, в среднем: '
-      '${avgPages.toStringAsFixed(1)}');
+  print(
+    'Суммарно страниц: $totalPages, в среднем: ${avgPages.toStringAsFixed(1)}',
+  );
   print('Самая старая: ${oldest.title} (${oldest.year})');
   print('Самая новая: ${newest.title} (${newest.year})');
   print('Самая объёмная: ${largest.title} (${largest.pages} стр.)');
@@ -239,114 +264,124 @@ void main() {
   var running = true;
 
   while (running) {
-    printMenu();
-    stdout.write('> ');
-    final command = readLine()?.trim();
+    try {
+      printMenu();
+      stdout.write('> ');
+      final command = readLineOrThrow().trim();
 
-    switch (command) {
-      case '1':
-        printAll(library);
-        break;
-      case '2':
-        stdout.write('Введите запрос: ');
-        final query = readLine()?.trim() ?? '';
-        final results = library.search(query).toList();
-        print('');
-        print('Результаты поиска:');
-        if (results.isEmpty) {
-          print('Ничего не найдено.');
-        } else {
-          for (int i = 0; i < results.length; i++) {
-            final book = results[i];
-            print('${i + 1}. ${book.describe()}');
-          }
-        }
-        break;
-      case '3':
-        print('Статусы: 1-Запланирована, 2-Читаю, 3-Прочитана, 4-Брошена');
-        stdout.write('Выберите статус: ');
-        final choice = readLine()?.trim();
-        final statusMap = {
-          '1': ReadingStatus.planned,
-          '2': ReadingStatus.reading,
-          '3': ReadingStatus.finished,
-          '4': ReadingStatus.abandoned,
-        };
-        final status = statusMap[choice];
-        if (status == null) {
-          print('Неверный выбор.');
-        } else {
-          final filtered =
-              library.where((b) => b.status == status).toList();
+      switch (command) {
+        case '1':
+          printAll(library);
+          break;
+        case '2':
+          stdout.write('Введите запрос: ');
+          final query = readLineOrThrow().trim();
+          final results = library.search(query).toList();
           print('');
-          print('Книги со статусом "${status.label}":');
-          if (filtered.isEmpty) {
-            print('  Ничего не найдено.');
+          print('Результаты поиска:');
+          if (results.isEmpty) {
+            print('Ничего не найдено.');
           } else {
-            for (final book in filtered) {
-              print('  - ${book.describe()}');
+            for (int i = 0; i < results.length; i++) {
+              final book = results[i];
+              print('${i + 1}. ${book.describe()}');
             }
           }
-        }
-        break;
-      case '4':
-        final sorted = library.items.toList()..sort();
-        print('');
-        print('Отсортированный каталог:');
-        for (final book in sorted) {
-          print('  - ${book.title}');
-        }
-        break;
-      case '5':
-        printStatistics(library);
-        break;
-      case '6':
-        stdout.write('Название: ');
-        final title = readLine()?.trim() ?? '';
-        stdout.write('Автор: ');
-        final author = readLine()?.trim() ?? '';
-        final year = askInt('Год издания', min: 1000, max: 2026);
-        final pages = askInt('Количество страниц', min: 1);
-        stdout.write('Жанры (через запятую): ');
-        final genresInput = readLine()?.trim() ?? '';
-        final genres = genresInput
-            .split(',')
-            .map((g) => g.trim())
-            .where((g) => g.isNotEmpty)
-            .toSet();
-        library.add(Book(
-          title: title,
-          author: author,
-          year: year,
-          pages: pages,
-          genres: genres,
-        ));
-        print('Книга добавлена.');
-        break;
-      case '7':
-        printAll(library);
-        if (library.count == 0) break;
-        final number =
-            askInt('Введите номер книги для удаления', min: 1, max: library.count);
-        final book = library.items[number - 1];
-        stdout.write('Удалить "${book.title}"? (да/нет): ');
-        final confirm = readLine()?.trim().toLowerCase() ?? '';
-        if (confirm == 'да' || confirm == 'д') {
-          library.remove(book);
-          print('Книга удалена.');
-        } else {
-          print('Удаление отменено.');
-        }
-        break;
-      case '8':
-        demonstrateOOP();
-        break;
-      case '0':
-        running = false;
-        print('Работа завершена.');
-        break;
-      default:
-        print('Неизвестная команда. Повторите ввод.');
+          break;
+        case '3':
+          print('Статусы: 1-Запланирована, 2-Читаю, 3-Прочитана, 4-Брошена');
+          stdout.write('Выберите статус: ');
+          final choice = readLineOrThrow().trim();
+          final statusMap = {
+            '1': ReadingStatus.planned,
+            '2': ReadingStatus.reading,
+            '3': ReadingStatus.finished,
+            '4': ReadingStatus.abandoned,
+          };
+          final status = statusMap[choice];
+          if (status == null) {
+            print('Неверный выбор.');
+          } else {
+            final filtered = library.where((b) => b.status == status).toList();
+            print('');
+            print('Книги со статусом "${status.label}":');
+            if (filtered.isEmpty) {
+              print('  Ничего не найдено.');
+            } else {
+              for (final book in filtered) {
+                print('  - ${book.describe()}');
+              }
+            }
+          }
+          break;
+        case '4':
+          final sorted = library.items.toList()..sort();
+          print('');
+          print('Отсортированный каталог:');
+          for (final book in sorted) {
+            print('  - ${book.title}');
+          }
+          break;
+        case '5':
+          printStatistics(library);
+          break;
+        case '6':
+          stdout.write('Название: ');
+          final title = readLineOrThrow().trim();
+          stdout.write('Автор: ');
+          final author = readLineOrThrow().trim();
+          final year = askInt('Год издания', min: 1000, max: 2026);
+          final pages = askInt('Количество страниц', min: 1);
+          stdout.write('Жанры (через запятую): ');
+          final genresInput = readLineOrThrow().trim();
+          final genres = genresInput
+              .split(',')
+              .map((g) => g.trim())
+              .where((g) => g.isNotEmpty)
+              .toSet();
+          library.add(
+            Book(
+              title: title,
+              author: author,
+              year: year,
+              pages: pages,
+              genres: genres,
+            ),
+          );
+          print('Книга добавлена.');
+          break;
+        case '7':
+          printAll(library);
+          if (library.count == 0) break;
+          final number = askInt(
+            'Введите номер книги для удаления',
+            min: 1,
+            max: library.count,
+          );
+          final book = library.items[number - 1];
+          stdout.write('Удалить "${book.title}"? (да/нет): ');
+          final confirm = readLineOrThrow().trim().toLowerCase();
+          if (confirm == 'да' || confirm == 'д') {
+            library.remove(book);
+            print('Книга удалена.');
+          } else {
+            print('Удаление отменено.');
+          }
+          break;
+        case '8':
+          demonstrateOOP();
+          break;
+        case '0':
+          running = false;
+          print('Работа завершена.');
+          break;
+        default:
+          print('Неизвестная команда. Повторите ввод.');
+      }
+    } on InputClosedException {
+      // Ловим исключение: прерываем текущую операцию и завершаем цикл
+      print('\nВвод закрыт. Текущая операция отменена. Завершение работы.');
+      running = false;
     }
   }
 }

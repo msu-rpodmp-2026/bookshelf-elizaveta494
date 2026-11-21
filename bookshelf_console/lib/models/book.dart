@@ -41,9 +41,8 @@ class Book extends LibraryItem
       author: json['author'] as String,
       year: json['year'] as int? ?? 2024,
       pages: json['pages'] as int? ?? 100,
-      genres: (json['genres'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toSet() ??
+      genres:
+          (json['genres'] as List<dynamic>?)?.map((e) => e as String).toSet() ??
           {},
       status: ReadingStatus.fromName(json['status'] as String? ?? 'planned'),
       rating: (json['rating'] as num?)?.toDouble(),
@@ -87,14 +86,14 @@ class Book extends LibraryItem
 
   @override
   Map<String, dynamic> toJson() => {
-        'title': title,
-        'author': author,
-        'year': year,
-        'pages': pages,
-        'genres': genres.toList(),
-        'status': status.name,
-        'rating': _rating,
-      };
+    'title': title,
+    'author': author,
+    'year': year,
+    'pages': pages,
+    'genres': genres.toList(),
+    'status': status.name,
+    'rating': _rating,
+  };
 
   @override
   String describe() =>

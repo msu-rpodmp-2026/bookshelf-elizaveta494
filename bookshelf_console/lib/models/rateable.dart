@@ -4,8 +4,7 @@ mixin Rateable {
   int _voteCount = 0;
 
   /// Среднее значение оценок.
-  double get averageRating =>
-      _voteCount == 0 ? 0.0 : _totalRating / _voteCount;
+  double get averageRating => _voteCount == 0 ? 0.0 : _totalRating / _voteCount;
 
   /// Число голосов.
   int get voteCount => _voteCount;

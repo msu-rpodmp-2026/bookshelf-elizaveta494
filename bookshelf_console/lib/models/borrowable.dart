@@ -6,8 +6,7 @@ mixin Borrowable on LibraryItem {
   DateTime? _dueDate;
 
   /// Выдана ли книга сейчас.
-  bool get isBorrowed =>
-      _dueDate != null && _dueDate!.isAfter(DateTime.now());
+  bool get isBorrowed => _dueDate != null && _dueDate!.isAfter(DateTime.now());
 
   /// Дата возврата (null если не выдана).
   DateTime? get dueDate => _dueDate;
@@ -17,8 +16,9 @@ mixin Borrowable on LibraryItem {
     _dueDate = DateTime.now().add(Duration(days: days));
     if (this is Loggable) {
       (this as Loggable).log(
-          'Книга "$title" выдана на $days дней. Вернуть до: '
-          '${_dueDate!.toIso8601String().split('T').first}');
+        'Книга "$title" выдана на $days дней. Вернуть до: '
+        '${_dueDate!.toIso8601String().split('T').first}',
+      );
     }
   }
 

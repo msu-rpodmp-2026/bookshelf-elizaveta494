@@ -25,8 +25,8 @@ class BookRated extends LibraryEvent {
 
 /// Форматированное сообщение о событии (switch-выражение без default).
 String describeEvent(LibraryEvent event) => switch (event) {
-      BookAdded(:final book) => 'Добавлена книга: «${book.title}»',
-      BookRemoved(:final book) => 'Удалена книга: «${book.title}»',
-      BookRated(:final book, :final rating) =>
-        'Книга «${book.title}» оценена на $rating',
-    };
+  BookAdded(:final book) => 'Добавлена книга: «${book.title}»',
+  BookRemoved(:final book) => 'Удалена книга: «${book.title}»',
+  BookRated(:final book, :final rating) =>
+    'Книга «${book.title}» оценена на $rating',
+};

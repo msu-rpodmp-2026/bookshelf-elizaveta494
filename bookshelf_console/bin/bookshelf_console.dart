@@ -8,6 +8,8 @@ import 'package:bookshelf_console/models/ebook.dart';
 import 'package:bookshelf_console/models/audiobook.dart';
 import 'package:bookshelf_console/models/library.dart';
 import 'package:bookshelf_console/models/library_event.dart';
+import 'package:bookshelf_console/models/library_storage.dart';
+import 'package:bookshelf_console/models/library_format_exception.dart';
 
 // Исключение: поток ввода закрыт (EOF) — операцию надо отменить.
 class InputClosedException implements Exception {}
@@ -19,97 +21,144 @@ String readLineOrThrow() {
   return input;
 }
 
-// Каталог книг (8 книг, 5 жанров)
-final Library<Book> library = Library<Book>();
+// Надёжный ввод непустой строки
+String readNonEmpty(String prompt, String fieldName) {
+  while (true) {
+    stdout.write(prompt);
+    final input = readLineOrThrow().trim();
+    if (input.isNotEmpty) return input;
+    print(
+      '$fieldName не может быть пустым. Введите ещё раз или нажмите Ctrl+Z для отмены.',
+    );
+  }
+}
 
-void initLibrary() {
-  library.add(
-    Book(
-      title: 'Преступление и наказание',
-      author: 'Фёдор Достоевский',
-      year: 1866,
-      pages: 672,
-      genres: {'роман', 'классика'},
-      status: ReadingStatus.finished,
-      rating: 5.0,
-    ),
-  );
-  library.add(
-    Book(
-      title: 'Война и мир',
-      author: 'Лев Толстой',
-      year: 1869,
-      pages: 1225,
-      genres: {'роман', 'классика'},
-      status: ReadingStatus.finished,
-      rating: 4.5,
-    ),
-  );
-  library.add(
-    Book(
-      title: 'Мастер и Маргарита',
-      author: 'Михаил Булгаков',
-      year: 1967,
-      pages: 480,
-      genres: {'роман', 'фантастика'},
-      status: ReadingStatus.reading,
-    ),
-  );
-  library.add(
-    Book(
-      title: '1984',
-      author: 'Джордж Оруэлл',
-      year: 1949,
-      pages: 320,
-      genres: {'антиутопия'},
-      status: ReadingStatus.finished,
-    ),
-  );
-  library.add(
-    Book(
-      title: 'Гарри Поттер и философский камень',
-      author: 'Джоан Роулинг',
-      year: 1997,
-      pages: 432,
-      genres: {'фэнтези'},
-      status: ReadingStatus.finished,
-    ),
-  );
-  library.add(
-    PaperBook(
-      title: 'Дюна',
-      author: 'Фрэнк Герберт',
-      year: 1965,
-      pages: 688,
-      genres: {'фантастика'},
-      status: ReadingStatus.planned,
-      shelf: 'B3',
-    ),
-  );
-  library.add(
-    EBook(
-      title: 'Марсианин',
-      author: 'Энди Вейер',
-      year: 2011,
-      pages: 384,
-      genres: {'фантастика'},
-      status: ReadingStatus.finished,
-      format: 'epub',
-      sizeMb: 2.5,
-    ),
-  );
-  library.add(
-    AudioBook(
-      title: 'Основы Dart',
-      author: 'С. А. Чернышев',
-      year: 2024,
-      pages: 521,
-      genres: {'учебник'},
-      status: ReadingStatus.planned,
-      duration: const Duration(hours: 10, minutes: 30),
-      narrator: 'Иван Петров',
-    ),
-  );
+// Каталог книг
+final Library<Book> library = Library<Book>();
+final storage = LibraryStorage('data');
+
+// Инициализация каталога из файла
+Future<void> initLibrary() async {
+  try {
+    final books = await storage.load();
+    if (books.isEmpty) {
+      print('Файл каталога не найден — создан новый пустой каталог.');
+      // Добавляем книги по умолчанию
+      library.add(
+        Book(
+          title: 'Преступление и наказание',
+          author: 'Фёдор Достоевский',
+          year: 1866,
+          pages: 672,
+          genres: {'роман', 'классика'},
+          status: ReadingStatus.finished,
+          rating: 5.0,
+        ),
+      );
+      library.add(
+        Book(
+          title: 'Война и мир',
+          author: 'Лев Толстой',
+          year: 1869,
+          pages: 1225,
+          genres: {'роман', 'классика'},
+          status: ReadingStatus.finished,
+          rating: 4.5,
+        ),
+      );
+      library.add(
+        Book(
+          title: 'Мастер и Маргарита',
+          author: 'Михаил Булгаков',
+          year: 1967,
+          pages: 480,
+          genres: {'роман', 'фантастика'},
+          status: ReadingStatus.reading,
+        ),
+      );
+      library.add(
+        Book(
+          title: '1984',
+          author: 'Джордж Оруэлл',
+          year: 1949,
+          pages: 320,
+          genres: {'антиутопия'},
+          status: ReadingStatus.finished,
+        ),
+      );
+      library.add(
+        Book(
+          title: 'Гарри Поттер и философский камень',
+          author: 'Джоан Роулинг',
+          year: 1997,
+          pages: 432,
+          genres: {'фэнтези'},
+          status: ReadingStatus.finished,
+        ),
+      );
+      library.add(
+        PaperBook(
+          title: 'Дюна',
+          author: 'Фрэнк Герберт',
+          year: 1965,
+          pages: 688,
+          genres: {'фантастика'},
+          status: ReadingStatus.planned,
+          shelf: 'B3',
+        ),
+      );
+      library.add(
+        EBook(
+          title: 'Марсианин',
+          author: 'Энди Вейер',
+          year: 2011,
+          pages: 384,
+          genres: {'фантастика'},
+          status: ReadingStatus.finished,
+          format: 'epub',
+          sizeMb: 2.5,
+        ),
+      );
+      library.add(
+        AudioBook(
+          title: 'Основы Dart',
+          author: 'С. А. Чернышев',
+          year: 2024,
+          pages: 521,
+          genres: {'учебник'},
+          status: ReadingStatus.planned,
+          duration: const Duration(hours: 10, minutes: 30),
+          narrator: 'Иван Петров',
+        ),
+      );
+      await storage.save(library.items);
+      print('Каталог инициализирован с книгами по умолчанию.');
+    } else {
+      for (final book in books) {
+        library.add(book);
+      }
+      print('Каталог загружен из файла. Книг: ${library.count}');
+    }
+  } on PathNotFoundException {
+    print('Файл каталога не найден — создан новый пустой каталог.');
+  } on FormatException catch (e) {
+    print('Файл повреждён: ${e.message}');
+  } on FileSystemException catch (e) {
+    print('Ошибка файловой системы: ${e.message} код(${e.osError?.errorCode})');
+    rethrow;
+  } finally {
+    print('Загрузка завершена.');
+  }
+}
+
+// Сохранение каталога
+Future<void> saveLibrary() async {
+  try {
+    await storage.save(library.items);
+    print('Каталог сохранён. Записей: ${library.count}');
+  } on FileSystemException catch (e) {
+    print('Ошибка при сохранении: ${e.message}');
+  }
 }
 
 // Вывод каталога
@@ -130,7 +179,7 @@ void printAll(Library<Book> lib, {String emptyMessage = 'Ничего не на�
   }
 }
 
-// Надёжный ввод числа (бросает исключение при EOF)
+// Надёжный ввод числа
 int askInt(String prompt, {int min = 0, int? max}) {
   int? value;
   do {
@@ -148,18 +197,6 @@ int askInt(String prompt, {int min = 0, int? max}) {
     }
   } while (value == null);
   return value;
-}
-
-// Надёжный ввод непустой строки (бросает исключение при EOF)
-String readNonEmpty(String prompt, String fieldName) {
-  while (true) {
-    stdout.write(prompt);
-    final input = readLineOrThrow().trim();
-    if (input.isNotEmpty) return input;
-    print(
-      '$fieldName не может быть пустым. Введите ещё раз или нажмите Ctrl+Z для отмены.',
-    );
-  }
 }
 
 // Статистика
@@ -202,12 +239,11 @@ void printStatistics(Library<Book> lib) {
   });
 }
 
-// Демонстрация ООП (Задание 6 + повышенная сложность)
+// Демонстрация ООП
 void demonstrateOOP() {
   print('');
   print('=== Демонстрация ООП ===');
 
-  // 1. == и hashCode
   final book1 = Book(title: 'Тест', author: 'Автор', year: 2020);
   final book2 = Book(title: 'Тест', author: 'Автор', year: 2020);
   print('book1 == book2: ${book1 == book2}');
@@ -216,7 +252,6 @@ void demonstrateOOP() {
   final set = <Book>{book1, book2};
   print('Размер множества с двумя одинаковыми книгами: ${set.length}');
 
-  // 2. compareTo и sort
   final books = library.items.toList();
   books.sort();
   print('');
@@ -225,17 +260,14 @@ void demonstrateOOP() {
     print('  - ${book.title}');
   }
 
-  // 3. copyWith
   final copy = book1.copyWith(year: 2021);
   print('');
   print('Оригинал: ${book1.year}, копия: ${copy.year}');
 
-  // 4. Миксин Rateable
   book1.vote(4.0);
   book1.vote(5.0);
   print('Средняя оценка: ${book1.averageRating}');
 
-  // 5. Миксин Borrowable (для PaperBook)
   final paperBook = PaperBook(
     title: 'Тестовая книга',
     author: 'Тест',
@@ -246,11 +278,9 @@ void demonstrateOOP() {
   paperBook.giveBack();
   print('После возврата: ${paperBook.isBorrowed}');
 
-  // 6. toJson
   print('');
   print('JSON: ${book1.toJson()}');
 
-  // 7. Sealed class и switch-выражение (повышенная сложность №2)
   final event = BookAdded(book1);
   final message = describeEvent(event);
   print('Событие: $message');
@@ -259,7 +289,7 @@ void demonstrateOOP() {
 // Главное меню
 void printMenu() {
   print('');
-  print('=== BookShelf (ООП) ===');
+  print('=== BookShelf (ООП + Файлы) ===');
   print('1. Показать весь каталог');
   print('2. Поиск по названию/автору/жанру');
   print('3. Фильтр по статусу');
@@ -268,11 +298,14 @@ void printMenu() {
   print('6. Добавить книгу');
   print('7. Удалить книгу');
   print('8. Демонстрация ООП');
+  print('9. Экспорт в CSV');
+  print('10. Импорт из CSV');
+  print('11. Резервная копия');
   print('0. Выход');
 }
 
-void main() {
-  initLibrary();
+Future<void> main() async {
+  await initLibrary();
   var running = true;
 
   while (running) {
@@ -338,7 +371,6 @@ void main() {
           printStatistics(library);
           break;
         case '6':
-          // Валидация названия и автора (замечание преподавателя)
           final title = readNonEmpty('Название: ', 'Название');
           final author = readNonEmpty('Автор: ', 'Автор');
           final year = askInt('Год издания', min: 1000, max: 2026);
@@ -360,6 +392,7 @@ void main() {
             ),
           );
           print('Книга добавлена.');
+          await saveLibrary();
           break;
         case '7':
           printAll(library);
@@ -375,6 +408,7 @@ void main() {
           if (confirm == 'да' || confirm == 'д') {
             library.remove(book);
             print('Книга удалена.');
+            await saveLibrary();
           } else {
             print('Удаление отменено.');
           }
@@ -382,9 +416,34 @@ void main() {
         case '8':
           demonstrateOOP();
           break;
+        case '9':
+          await storage.exportCsv(library.items);
+          print('Каталог экспортирован в ${storage.csvPath}');
+          break;
+        case '10':
+          try {
+            final importedBooks = await storage.importCsv();
+            for (final book in importedBooks) {
+              library.add(book);
+            }
+            print('Импортировано книг: ${importedBooks.length}');
+            await saveLibrary();
+          } on LibraryFormatException catch (e) {
+            print(e);
+          }
+          break;
+        case '11':
+          final success = await storage.backup();
+          if (success) {
+            print('Резервная копия создана.');
+          } else {
+            print('Файл каталога не найден — резервная копия не создана.');
+          }
+          break;
         case '0':
           running = false;
-          print('Работа завершена.');
+          await saveLibrary();
+          print('Работа завершена. Сохранено записей: ${library.count}');
           break;
         default:
           print('Неизвестная команда. Повторите ввод.');

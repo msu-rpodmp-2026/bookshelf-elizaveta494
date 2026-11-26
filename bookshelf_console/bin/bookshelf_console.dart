@@ -130,12 +130,12 @@ void printAll(Library<Book> lib, {String emptyMessage = 'Ничего не на�
   }
 }
 
-// Надёжный ввод числа (теперь бросает исключение при EOF)
+// Надёжный ввод числа (бросает исключение при EOF)
 int askInt(String prompt, {int min = 0, int? max}) {
   int? value;
   do {
     stdout.write('$prompt: ');
-    final input = readLineOrThrow(); // EOF -> исключение, операция прервётся
+    final input = readLineOrThrow();
     value = int.tryParse(input);
     if (value == null || value < min || (max != null && value > max)) {
       print('Некорректное значение.');
@@ -148,6 +148,18 @@ int askInt(String prompt, {int min = 0, int? max}) {
     }
   } while (value == null);
   return value;
+}
+
+// Надёжный ввод непустой строки (бросает исключение при EOF)
+String readNonEmpty(String prompt, String fieldName) {
+  while (true) {
+    stdout.write(prompt);
+    final input = readLineOrThrow().trim();
+    if (input.isNotEmpty) return input;
+    print(
+      '$fieldName не может быть пустым. Введите ещё раз или нажмите Ctrl+Z для отмены.',
+    );
+  }
 }
 
 // Статистика
@@ -326,10 +338,9 @@ void main() {
           printStatistics(library);
           break;
         case '6':
-          stdout.write('Название: ');
-          final title = readLineOrThrow().trim();
-          stdout.write('Автор: ');
-          final author = readLineOrThrow().trim();
+          // Валидация названия и автора (замечание преподавателя)
+          final title = readNonEmpty('Название: ', 'Название');
+          final author = readNonEmpty('Автор: ', 'Автор');
           final year = askInt('Год издания', min: 1000, max: 2026);
           final pages = askInt('Количество страниц', min: 1);
           stdout.write('Жанры (через запятую): ');
@@ -379,7 +390,6 @@ void main() {
           print('Неизвестная команда. Повторите ввод.');
       }
     } on InputClosedException {
-      // Ловим исключение: прерываем текущую операцию и завершаем цикл
       print('\nВвод закрыт. Текущая операция отменена. Завершение работы.');
       running = false;
     }
